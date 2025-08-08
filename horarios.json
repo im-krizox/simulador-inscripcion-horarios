@@ -1,0 +1,172 @@
+[
+    {
+      "materia": "Administr. y sistemas de contabil",
+      "grupo": "1701",
+      "horarios": [
+        { "dia": "LU", "inicio": "11:00", "fin": "13:00" },
+        { "dia": "MI", "inicio": "11:00", "fin": "13:00" }
+      ],
+      "profesor": "Alvarez Terrones Rita Dalila"
+    },
+    {
+        "materia": "Invest. en matem. aplicad. y comput",
+        "grupo": "1701",
+        "horarios": [
+            { "dia": "MA", "inicio": "11:00", "fin": "13:00" },
+            { "dia": "JU", "inicio": "11:00", "fin": "13:00" }
+        ],
+        "profesor": "Garcia Perez Ana Karla"
+    },
+    {
+        "materia": "Sistemas operativos",
+        "grupo": "1702",
+        "horarios": [
+            { "dia": "MA", "inicio": "09:00", "fin": "11:00" },
+            { "dia": "JU", "inicio": "09:00", "fin": "11:00" }
+        ],
+        "profesor": "Loza Pacheco Dulce Lourdes"
+    },
+    {
+        "materia": "Analisis de decis. y teoria de ju",
+        "grupo": "1702",
+        "horarios": [
+            { "dia": "MA", "inicio": "07:00", "fin": "09:00" },
+            { "dia": "JU", "inicio": "07:00", "fin": "09:00" }
+        ],
+        "profesor": "Senties Escalante Ernesto"
+    },
+    {
+        "materia": "Elementos de finanzas e inversio",
+        "grupo": "1703",
+        "horarios": [
+            { "dia": "MA", "inicio": "09:00", "fin": "11:00" },
+            { "dia": "JU", "inicio": "09:00", "fin": "11:00" }
+        ],
+        "profesor": "Orozco Sanchez Nemesio"
+    },
+    {
+        "materia": "Invest. en matem. aplicad. y comput",
+        "grupo": "1703",
+        "horarios": [
+            { "dia": "MA", "inicio": "11:00", "fin": "13:00" },
+            { "dia": "JU", "inicio": "11:00", "fin": "13:00" }
+        ],
+        "profesor": "Gonzalez Videgaray Ma. del Carmen"
+    },
+    {
+        "materia": "Sistemas inteligentes",
+        "grupo": "1704",
+        "horarios": [
+            { "dia": "MA", "inicio": "07:00", "fin": "09:00" },
+            { "dia": "JU", "inicio": "07:00", "fin": "09:00" }
+        ],
+        "profesor": "Angeles Uribe Miriam"
+    },
+    {
+        "materia": "Temas selectos de computacion 1",
+        "grupo": "1704",
+        "horarios": [
+            { "dia": "MI", "inicio": "11:00", "fin": "13:00" },
+            { "dia": "VI", "inicio": "11:00", "fin": "13:00" }
+        ],
+        "profesor": "Loza Pacheco Eduardo Eloy"
+    },
+    {
+        "materia": "Invest. en matem. aplicad. y comput",
+        "grupo": "1704",
+        "horarios": [
+            { "dia": "MA", "inicio": "11:00", "fin": "13:00" },
+            { "dia": "JU", "inicio": "11:00", "fin": "13:00" }
+        ],
+        "profesor": "Gonzalez Videgaray Efren Pablo Hector"
+    },
+    {
+        "materia": "Invest. en matem. aplicad. y comput",
+        "grupo": "1705",
+        "horarios": [
+            { "dia": "MA", "inicio": "11:00", "fin": "13:00" },
+            { "dia": "JU", "inicio": "11:00", "fin": "13:00" }
+        ],
+        "profesor": "Profesor no asignado"
+    },
+    {
+        "materia": "Temas selectos de computacion 1",
+        "grupo": "1751",
+        "horarios": [
+            { "dia": "LU", "inicio": "18:00", "fin": "20:00" },
+            { "dia": "MI", "inicio": "18:00", "fin": "20:00" }
+        ],
+        "profesor": "Vasconcelos Santillan Jorge"
+    },
+    {
+        "materia": "Sistemas operativos",
+        "grupo": "1752",
+        "horarios": [
+            { "dia": "LU", "inicio": "20:00", "fin": "22:00" },
+            { "dia": "MI", "inicio": "20:00", "fin": "22:00" }
+        ],
+        "profesor": "Gama Campillo Antonio"
+    },
+    {
+        "materia": "Invest. en matem. aplicad. y comput",
+        "grupo": "1752",
+        "horarios": [
+            { "dia": "MA", "inicio": "18:00", "fin": "20:00" },
+            { "dia": "JU", "inicio": "18:00", "fin": "20:00" }
+        ],
+        "profesor": "Profesor no asignado"
+    },
+    {
+        "materia": "Sistemas inteligentes",
+        "grupo": "1753",
+        "horarios": [
+            { "dia": "VI", "inicio": "18:00", "fin": "22:00" }
+        ],
+        "profesor": "Soto Osornio Arturo Antonio"
+    },
+    {
+        "materia": "Temas selectos de computacion 1",
+        "grupo": "1753",
+        "horarios": [
+            { "dia": "LU", "inicio": "20:00", "fin": "22:00" },
+            { "dia": "MI", "inicio": "20:00", "fin": "22:00" }
+        ],
+        "profesor": "Reyes Hernandez Sergio"
+    },
+    {
+        "materia": "Invest. en matem. aplicad. y comput",
+        "grupo": "1753",
+        "horarios": [
+            { "dia": "MA", "inicio": "18:00", "fin": "20:00" },
+            { "dia": "JU", "inicio": "18:00", "fin": "20:00" }
+        ],
+        "profesor": "Amador Molina Armando"
+    },
+    {
+        "materia": "Sistemas inteligentes",
+        "grupo": "1754",
+        "horarios": [
+            { "dia": "VI", "inicio": "18:00", "fin": "22:00" }
+        ],
+        "profesor": "Rosas Hernandez Javier"
+    },
+    {
+        "materia": "Elementos de finanzas e inversio",
+        "grupo": "1755",
+        "horarios": [
+            { "dia": "LU", "inicio": "18:00", "fin": "20:00" },
+            { "dia": "MI", "inicio": "18:00", "fin": "20:00" }
+        ],
+        "profesor": "Martinez Tolentino Espartaco"
+    },
+    {
+        "materia": "Invest. en matem. aplicad. y comput",
+        "grupo": "1755",
+        "horarios": [
+            { "dia": "LU", "inicio": "16:00", "fin": "18:00" },
+            { "dia": "MI", "inicio": "16:00", "fin": "18:00" }
+        ],
+        "profesor": "Alcazar Morales Jaqueline"
+    }
+]
+  
