@@ -3,6 +3,9 @@
 Un simulador web interactivo para planificar y visualizar horarios académicos, diseñado para ayudar a estudiantes y administradores a optimizar la selección de materias evitando conflictos de horarios.
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/ab552440-a332-4153-8fae-3ccf9c4ad30b/deploy-status)](https://app.netlify.com/projects/simulador-de-horarios/deploys)
+![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
+![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
+![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
 
 ## ¿Qué hace este proyecto?
 
