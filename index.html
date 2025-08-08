@@ -1,0 +1,501 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simulador de Inscripción - Horarios</title>
+  <style>
+    :root{--blue:#0b74de;--muted:#f3f4f6;--card:#ffffff}
+    body{font-family:Inter,Segoe UI,Arial;margin:0;background:#f5f7fa;color:#111}
+    header{background:linear-gradient(90deg,var(--blue),#3aa0ff);color:#fff;padding:14px 18px}
+    .wrap{display:flex;gap:12px;padding:12px}
+    .panel{background:var(--card);border-radius:8px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+    .left-column{width:360px;max-height:76vh;overflow:auto;display:flex;flex-direction:column}
+    .main{flex:1}
+    h2{margin:6px 0 12px}
+    .materia{border:1px solid #e6e9ee;padding:8px;border-radius:6px;margin-bottom:8px}
+    .grupo{display:flex;align-items:center;gap:8px;margin:6px 0}
+    .btn{background:var(--blue);color:#fff;padding:8px 10px;border-radius:6px;border:0;cursor:pointer}
+    .small{font-size:13px;color:#666}
+    .controls{display:flex;gap:8px;margin-bottom:12px}
+    #calendar{width:100%;height:640px;border-radius:6px;overflow:auto}
+    .grid{display:grid;grid-template-columns:60px repeat(5,1fr);border-top:1px solid #e6e9ee}
+    .timecell{border-right:1px solid #e6e9ee;padding:6px;font-size:12px;background:#fafbfd}
+    .daycol{min-height:40px;border-right:1px solid #e6e9ee;position:relative}
+    .slot{position:absolute;border-radius:6px;padding:6px;font-size:12px;color:#fff}
+    .combo-list{max-height:180px;overflow:auto}
+    footer{padding:10px;font-size:13px;color:#555}
+    .badge{background:#eee;padding:4px 6px;border-radius:6px;font-size:12px}
+    label.switch{display:inline-flex;align-items:center;gap:8px}
+    .grupo{border-radius:4px;padding:6px;margin:4px 0;transition:background-color 0.2s}
+    .grupo:hover{background-color:#f8f9fa}
+    .selectGroup{accent-color:var(--blue)}
+    .grupo label{cursor:pointer}
+    .controls{display:flex;gap:8px;flex-wrap:wrap}
+    h3{margin:6px 0 12px;font-size:16px}
+    h4{margin:12px 0 8px;font-size:14px;color:#555}
+  </style>
+</head>
+<body>
+  <header>
+    <strong>Simulador de Inscripción</strong>
+    <div style="font-size:13px;opacity:.9">Carga de horarios, detección de empalmes, alternativas y calendario visual</div>
+  </header>
+  <div class="wrap">
+    <div class="left-column">
+      <div class="panel">
+        <h2>Materias y Grupos</h2>
+        <div class="small">Marca las materias que quieres inscribir y selecciona grupo(s). Puedes marcar grupos como <strong>llenos</strong> para forzar alternativas.</div>
+        <div id="materiasContainer"></div>
+      </div>
+      
+      <div class="panel" style="margin-top:12px">
+        <h3 style="margin-top:0">Controles</h3>
+        <div class="controls">
+          <button id="computeBtn" class="btn">Calcular combinaciones</button>
+          <button id="autoBtn" class="btn" style="background:#28a745">Auto llenar (con reservas)</button>
+        </div>
+        <div style="margin-top:8px">
+          <button id="clearBtn" class="btn" style="background:#dc3545">Limpiar selección manual</button>
+        </div>
+        
+        <h4 style="margin:12px 0 8px 0">Opciones</h4>
+        <div class="small"><label class="switch"><input id="limitCombos" type="checkbox" checked> Limitar combos a 2000 (recomendado)</label></div>
+        
+        <div style="margin-top:12px"><strong>Combinaciones encontradas:</strong> <span id="comboCount">0</span></div>
+        <div class="combo-list panel" id="combos" style="margin-top:8px"></div>
+      </div>
+    </div>
+
+    <div class="panel main">
+      <h2>Calendario semanal</h2>
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:8px">
+        <div class="badge">Seleccionada: <span id="selectedCombo">-</span></div>
+        <div class="small">Puedes elegir una combinación para visualizar en el calendario.</div>
+        <div style="margin-left:auto"><button id="exportBtn" class="btn">Exportar selección (JSON)</button></div>
+      </div>
+      <div id="calendar"></div>
+      <footer>
+        Datos cargados desde el JSON de usuario. Puedes marcar grupos como llenos para probar reserva automática. 
+      </footer>
+    </div>
+  </div>
+
+  <script>
+    // ---------- Carga dinámica de datos (desde horarios.json) ----------
+    let materias = [];
+    const byMateria = {};
+    let dataLoaded = false;
+    const indexToGroup = {};
+    const previewSelected = new Set();
+    const selectedGroups = new Set(); // Track individually selected groups
+
+    // Construye la UI agrupando todos los grupos por materia en una sola caja
+    function buildMateriasUI(){
+      const cont = document.getElementById('materiasContainer');
+      cont.innerHTML='';
+      const materiaNames = Object.keys(byMateria).sort((a,b)=>a.localeCompare(b));
+      materiaNames.forEach((name, materiaIdx)=>{
+        const grupos = byMateria[name];
+        const div = document.createElement('div');
+        div.className='materia';
+        div.innerHTML = `<label><input type='checkbox' class='want' data-name='${name}'> <strong>${name}</strong> <span class='small'>(${grupos.length} grupo(s))</span></label>`;
+
+        const gdiv = document.createElement('div');
+        gdiv.style.marginTop='6px';
+
+        grupos.forEach(g=>{
+          const row = document.createElement('div');
+          row.className='grupo';
+          row.innerHTML = `
+            <label style='display:flex;align-items:center;gap:6px;margin-right:10px'>
+              <input type='checkbox' class='selectGroup' data-gi='${g._idx}' data-materia='${name}'> Seleccionar
+            </label>
+            <div style='flex:1'>Grupo ${g.grupo} — <span class='small'>${g.profesor}</span></div>
+            <label style='display:flex;align-items:center;gap:6px'>
+              <input type='checkbox' class='isFull' data-gi='${g._idx}'> Lleno
+            </label>`;
+          gdiv.appendChild(row);
+        });
+
+        div.appendChild(gdiv);
+        cont.appendChild(div);
+      });
+      
+      // Add event listeners for group selection
+      setupGroupSelectionListeners();
+    }
+
+    // Setup event listeners for individual group selection
+    function setupGroupSelectionListeners(){
+      document.querySelectorAll('.selectGroup').forEach(checkbox => {
+        checkbox.addEventListener('change', handleGroupSelection);
+      });
+    }
+
+    // Handle individual group selection
+    function handleGroupSelection(event){
+      const checkbox = event.target;
+      const groupIdx = parseInt(checkbox.dataset.gi);
+      const materia = checkbox.dataset.materia;
+      
+      if(checkbox.checked){
+        // Add to selected groups
+        selectedGroups.add(groupIdx);
+        
+        // Disable other groups from same materia
+        disableGroupsFromSameMateria(materia, groupIdx);
+        
+        // Disable conflicting groups from other materias
+        disableConflictingGroups(groupIdx);
+        
+        // Update calendar with currently selected groups
+        updateCalendarWithSelectedGroups();
+      } else {
+        // Remove from selected groups
+        selectedGroups.delete(groupIdx);
+        
+        // Re-enable all groups and recalculate conflicts
+        enableAllGroups();
+        recalculateConflicts();
+        
+        // Update calendar
+        updateCalendarWithSelectedGroups();
+      }
+    }
+
+    // Disable other groups from the same materia
+    function disableGroupsFromSameMateria(materia, exceptGroupIdx){
+      const grupos = byMateria[materia];
+      grupos.forEach(g => {
+        if(g._idx !== exceptGroupIdx){
+          const checkbox = document.querySelector(`.selectGroup[data-gi="${g._idx}"]`);
+          if(checkbox){
+            checkbox.disabled = true;
+            checkbox.parentElement.style.opacity = '0.5';
+          }
+        }
+      });
+    }
+
+    // Disable groups that conflict with the selected group
+    function disableConflictingGroups(selectedGroupIdx){
+      const selectedGroup = materias[selectedGroupIdx];
+      
+      // Check all other groups for conflicts
+      Object.values(byMateria).forEach(grupos => {
+        grupos.forEach(g => {
+          if(g._idx !== selectedGroupIdx && !selectedGroups.has(g._idx)){
+            if(groupsConflict(selectedGroup, g)){
+              const checkbox = document.querySelector(`.selectGroup[data-gi="${g._idx}"]`);
+              if(checkbox){
+                checkbox.disabled = true;
+                checkbox.parentElement.style.opacity = '0.5';
+              }
+            }
+          }
+        });
+      });
+    }
+
+    // Enable all group checkboxes
+    function enableAllGroups(){
+      document.querySelectorAll('.selectGroup').forEach(checkbox => {
+        checkbox.disabled = false;
+        checkbox.parentElement.style.opacity = '1';
+      });
+    }
+
+    // Recalculate conflicts for currently selected groups
+    function recalculateConflicts(){
+      selectedGroups.forEach(groupIdx => {
+        const materia = materias[groupIdx].materia;
+        disableGroupsFromSameMateria(materia, groupIdx);
+        disableConflictingGroups(groupIdx);
+      });
+    }
+
+    // Update calendar to show currently selected groups
+    function updateCalendarWithSelectedGroups(){
+      const selectedGroupObjects = Array.from(selectedGroups).map(idx => materias[idx]);
+      drawCalendar(selectedGroupObjects);
+      
+      // Update the selected combo display
+      if(selectedGroupObjects.length > 0){
+        document.getElementById('selectedCombo').textContent = `${selectedGroupObjects.length} grupo(s) seleccionado(s)`;
+        currentCombo = {idx: 'manual', combo: selectedGroupObjects};
+      } else {
+        document.getElementById('selectedCombo').textContent = '-';
+        currentCombo = null;
+      }
+    }
+
+    // Clear all individual group selections
+    function clearIndividualSelections(){
+      selectedGroups.clear();
+      document.querySelectorAll('.selectGroup').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      enableAllGroups();
+      document.getElementById('selectedCombo').textContent = '-';
+      currentCombo = null;
+      drawCalendar([]);
+    }
+
+    async function init(){
+      try{
+        // Deshabilitar acciones hasta cargar
+        document.getElementById('computeBtn').disabled = true;
+        document.getElementById('autoBtn').disabled = true;
+
+        const res = await fetch('horarios.json', {cache:'no-store'});
+        if(!res.ok) throw new Error('No se pudo cargar horarios.json');
+        materias = await res.json();
+
+        // Agrupar por materia
+        materias.forEach((m,idx)=>{
+          const key = m.materia;
+          if(!byMateria[key]) byMateria[key]=[];
+          byMateria[key].push({...m,_idx:idx, available:true});
+        });
+
+        buildMateriasUI();
+
+        dataLoaded = true;
+        document.getElementById('computeBtn').disabled = false;
+        document.getElementById('autoBtn').disabled = false;
+      }catch(err){
+        console.error(err);
+        alert('Error al cargar horarios.json. Asegúrate de que el archivo exista junto a este HTML.');
+      }
+    }
+
+    // Iniciar carga al abrir la página
+    if(document.readyState === 'loading'){
+      document.addEventListener('DOMContentLoaded', init);
+    } else {
+      init();
+    }
+
+    // Utils: map days
+    const DAYMAP = {LU:0, MA:1, MI:2, JU:3, VI:4};
+    const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
+
+    function timeToMinutes(t){ const [hh,mm]=t.split(':').map(Number); return hh*60+mm; }
+    function overlap(aStart,aEnd,bStart,bEnd){ return Math.max(aStart,bStart) < Math.min(aEnd,bEnd); }
+
+    // Allow selecting multiple materias; el JSON provee cada fila como un grupo distinto del mismo nombre de materia.
+
+    // get selected desired subjects based on checked checkboxes
+    function getDesiredSubjects(){
+      const names = Array.from(document.querySelectorAll('.want'))
+        .filter(ch=>ch.checked)
+        .map(ch=>ch.dataset.name);
+      const uniqueNames = [...new Set(names)];
+      return uniqueNames.map(name=>({materia:name, groups: byMateria[name].map(g=>({...g}))}));
+    }
+
+    // update available flags from checkboxes
+    function refreshAvailability(){
+      document.querySelectorAll('.isFull').forEach(cb=>{
+        const gidx = Number(cb.dataset.gi);
+        const entry = materias[gidx];
+        // locate group in byMateria
+        const arr = byMateria[entry.materia];
+        for(const gg of arr){ if(gg._idx===gidx){ gg.available = !cb.checked; break; } }
+      });
+    }
+
+    // Build conflict checker for a selection: selection is array of group objects (each from materias array)
+    function hasConflict(selection){
+      // build list of all class times: for each group, for each horario
+      const slots = [];
+      for(const g of selection){
+        for(const h of g.horarios){
+          const day = DAYMAP[h.dia];
+          const s = timeToMinutes(h.inicio), e = timeToMinutes(h.fin);
+          slots.push({day,s,e,group:g});
+        }
+      }
+      // check pairwise
+      for(let i=0;i<slots.length;i++){
+        for(let j=i+1;j<slots.length;j++){
+          if(slots[i].day===slots[j].day && overlap(slots[i].s,slots[i].e,slots[j].s,slots[j].e)) return true;
+        }
+      }
+      return false;
+    }
+
+    // Backtracking to generate combinations (choose one group per desired materia)
+    function generateCombinations(subjects, limit=2000){
+      const results=[];
+      function backtrack(idx, chosen){
+        if(results.length>=limit) return;
+        if(idx===subjects.length){
+          // check conflict
+          if(!hasConflict(chosen)) results.push(chosen.map(c=>c));
+          return;
+        }
+        const subj = subjects[idx];
+        // iterate groups - only available
+        for(const g of subj.groups){
+          if(!g.available) continue;
+          // choose g
+          chosen.push(g);
+          // quick conflict pruning: check newly added group conflicts with previous chosen
+          let conflict=false;
+          for(const prev of chosen.slice(0,-1)){
+            for(const h1 of prev.horarios){
+              for(const h2 of g.horarios){
+                if(DAYMAP[h1.dia]===DAYMAP[h2.dia] && overlap(timeToMinutes(h1.inicio),timeToMinutes(h1.fin),timeToMinutes(h2.inicio),timeToMinutes(h2.fin))){ conflict=true; break; }
+              }
+              if(conflict) break;
+            }
+            if(conflict) break;
+          }
+          if(!conflict) backtrack(idx+1, chosen);
+          chosen.pop();
+          if(results.length>=limit) return;
+        }
+      }
+      backtrack(0,[]);
+      return results;
+    }
+
+    // UI: compute button
+    document.getElementById('computeBtn').addEventListener('click',()=>{
+      if(!dataLoaded){ alert('Los datos aún no se cargan. Intenta de nuevo en unos segundos.'); return; }
+      
+      // Clear individual group selections
+      clearIndividualSelections();
+      
+      refreshAvailability();
+      const desired = getDesiredSubjects();
+      if(desired.length===0){ alert('Marca al menos una materia que quieras inscribir.'); return; }
+      const limit = document.getElementById('limitCombos').checked ? 2000 : 50000;
+      const combos = generateCombinations(desired, limit);
+      renderCombos(combos);
+    });
+
+    // render combos
+    function renderCombos(combos){
+      const el = document.getElementById('combos'); el.innerHTML='';
+      document.getElementById('comboCount').textContent = combos.length;
+      if(combos.length===0){ el.innerHTML='<div class="small">No hay combinaciones sin empalmes con los grupos disponibles. Usa reservas o marca grupos como llenos/disp.</div>'; return; }
+      combos.forEach((c,i)=>{
+        const d = document.createElement('div'); d.style.borderBottom='1px dashed #eee'; d.style.padding='6px';
+        d.innerHTML = `<div><strong>#${i+1}</strong> <span class='small'>(${c.length} materias)</span></div>`;
+        const list = document.createElement('div'); list.className='small';
+        c.forEach(g=>{ list.innerHTML += `<div>• ${g.materia} — Grupo ${g.grupo} (${g.profesor})</div>`; });
+        const btn = document.createElement('button'); btn.className='btn'; btn.textContent='Seleccionar'; btn.style.marginTop='6px';
+        btn.onclick = ()=>{ selectCombo(i,c); };
+        d.appendChild(list); d.appendChild(btn);
+        el.appendChild(d);
+      });
+    }
+
+    // select combo and draw calendar
+    let currentCombo=null; function selectCombo(idx,combo){
+      currentCombo={idx,combo};
+      document.getElementById('selectedCombo').textContent = idx+1;
+      drawCalendar(combo);
+    }
+
+    // draw calendar weekly grid (07:00-22:00)
+    function drawCalendar(combo){
+      const start = 7*60, end = 22*60; const step = 30; const rows = (end-start)/step;
+      const cal = document.getElementById('calendar'); cal.innerHTML='';
+      const grid = document.createElement('div'); grid.className='grid';
+      // time col
+      const timecol = document.createElement('div'); timecol.style.display='grid'; timecol.style.gridTemplateRows = `repeat(${rows},40px)`;
+      for(let r=0;r<rows;r++){ const t = start + r*step; const h = Math.floor(t/60).toString().padStart(2,'0')+':'+(t%60).toString().padStart(2,'0'); const cell = document.createElement('div'); cell.className='timecell'; cell.textContent=h; timecol.appendChild(cell); }
+      grid.appendChild(timecol);
+      // day columns
+      for(let d=0;d<5;d++){
+        const col = document.createElement('div'); col.className='daycol'; col.style.display='block'; col.style.minHeight=(rows*40)+'px';
+        // label
+        const label = document.createElement('div'); label.style.padding='6px'; label.style.borderBottom='1px solid #eee'; label.textContent = DAY_NAMES[d]; col.appendChild(label);
+        // append empty background slots
+        grid.appendChild(col);
+      }
+      cal.appendChild(grid);
+
+      // place classes
+      if(!combo) return;
+      combo.forEach((g,gi)=>{
+        g.horarios.forEach(h=>{
+          const day = DAYMAP[h.dia]; if(day===undefined) return;
+          const col = grid.children[day+1]; // +1 because first is time col
+          const s = timeToMinutes(h.inicio), e = timeToMinutes(h.fin);
+          const top = ((s - start) / (end - start)) * (rows*40) ;
+          const height = ((e - s) / (end - start)) * (rows*40);
+          const block = document.createElement('div'); block.className='slot';
+          block.style.top = (top+28) + 'px'; block.style.left='6px'; block.style.right='6px'; block.style.width = 'calc(100% - 12px)';
+          block.style.height = Math.max(28,height-4)+'px';
+          block.style.background = stringToColor(g.materia);
+          block.textContent = `${g.materia} — ${g.grupo} (${h.inicio}-${h.fin})`;
+          col.appendChild(block);
+        });
+      });
+    }
+
+    // generate color by string
+    function stringToColor(s){ let hash=0; for(let i=0;i<s.length;i++) hash = s.charCodeAt(i) + ((hash<<5)-hash); const c = (hash & 0x00FFFFFF).toString(16).toUpperCase(); return '#'+('00000'.substring(0,6-c.length)+c);
+    }
+
+    // Auto-fill with reserves: choose for each desired materia the first available group that doesn't conflict; if none, pick next available even if conflict and mark as reserve
+    document.getElementById('autoBtn').addEventListener('click',()=>{
+      if(!dataLoaded){ alert('Los datos aún no se cargan. Intenta de nuevo en unos segundos.'); return; }
+      
+      // Clear individual group selections
+      clearIndividualSelections();
+      
+      refreshAvailability();
+      const desired = getDesiredSubjects();
+      if(desired.length===0){ alert('Marca al menos una materia.'); return; }
+      const chosen=[]; const reserves=[];
+      for(const subj of desired){
+        let placed=false;
+        // try available groups
+        for(const g of subj.groups){
+          if(!g.available) continue;
+          // check conflict with current chosen
+          let bad=false;
+          for(const prev of chosen){ if(groupsConflict(prev,g)){ bad=true; break; } }
+          if(!bad){ chosen.push(g); placed=true; break; }
+        }
+        if(!placed){
+          // find any available group as reserve that may conflict
+          const alt = subj.groups.find(x=>x.available);
+          if(alt) reserves.push(alt);
+        }
+      }
+      const final = chosen.concat(reserves);
+      if(final.length===0){ alert('No se pudo rellenar con grupos disponibles'); return; }
+      selectCombo('Auto', final);
+      // show message about reserves
+      if(reserves.length>0) alert('Se agregaron '+reserves.length+' como reservas (pueden empalmar). Revisa el calendario y ajusta manualmente.');
+    });
+
+    function groupsConflict(a,b){
+      for(const h1 of a.horarios) for(const h2 of b.horarios) if(DAYMAP[h1.dia]===DAYMAP[h2.dia] && overlap(timeToMinutes(h1.inicio),timeToMinutes(h1.fin),timeToMinutes(h2.inicio),timeToMinutes(h2.fin))) return true;
+      return false;
+    }
+
+    // export selection
+    document.getElementById('exportBtn').addEventListener('click',()=>{
+      if(!currentCombo){ alert('Selecciona una combinación antes de exportar'); return; }
+      const data = {selectedIndex: currentCombo.idx, selection: currentCombo.combo};
+      const blob = new Blob([JSON.stringify(data,null,2)],{type:'application/json'});
+      const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href=url; a.download='inscripcion_seleccion.json'; a.click(); URL.revokeObjectURL(url);
+    });
+
+    // clear individual selections button
+    document.getElementById('clearBtn').addEventListener('click', clearIndividualSelections);
+
+    // initial small render
+    document.getElementById('comboCount').textContent='0';
+
+  </script>
+</body>
+</html>
