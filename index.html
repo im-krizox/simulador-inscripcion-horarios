@@ -39,6 +39,18 @@
     .controls{display:flex;gap:8px;flex-wrap:wrap}
     h3{margin:6px 0 12px;font-size:16px}
     h4{margin:12px 0 8px;font-size:14px;color:#555}
+    .hover-tooltip{position:absolute;background:#fff;border:1px solid #e6e9ee;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:12px;z-index:1000;max-width:280px;font-size:13px;line-height:1.4;pointer-events:none;opacity:0;transform:translateY(10px);transition:opacity 0.2s ease,transform 0.2s ease}
+    .hover-tooltip.show{opacity:1;transform:translateY(0)}
+    .hover-tooltip h5{margin:0 0 8px;font-size:14px;color:#333;font-weight:600}
+    .hover-tooltip .time-info{color:#666;margin-bottom:8px;font-size:12px}
+    .hover-tooltip .group-item{padding:6px 8px;margin:4px 0;background:#f8f9fa;border-radius:4px;border-left:4px solid #ddd}
+    .hover-tooltip .group-item.available{border-left-color:#28a745}
+    .hover-tooltip .group-item.full{border-left-color:#dc3545;opacity:0.7}
+    .hover-tooltip .group-item.selected{border-left-color:var(--blue);background:#e3f2fd}
+    .hover-tooltip .group-name{font-weight:500;color:#333}
+    .hover-tooltip .group-details{color:#666;font-size:11px;margin-top:2px}
+    .hover-tooltip .no-groups{color:#999;font-style:italic;text-align:center;padding:8px}
+    .daycol:hover{background-color:rgba(11,116,222,0.02)}
   </style>
 </head>
 <body>
@@ -402,6 +414,137 @@
       init();
     }
 
+    // ========== FUNCIONALIDAD DE HOVER PARA EL CALENDARIO ==========
+    let hoverTooltip = null;
+
+    // Función para obtener grupos disponibles en un día y rango de tiempo específico
+    function getGroupsForTimeSlot(dayIndex, startTime, endTime) {
+      const groups = [];
+      
+      // Iterar todos los grupos de todas las materias
+      Object.values(byMateria).forEach(materiaGroups => {
+        materiaGroups.forEach(group => {
+          // Verificar si este grupo tiene clases en el día especificado
+          group.horarios.forEach(horario => {
+            if (DAYMAP[horario.dia] === dayIndex) {
+              const groupStart = timeToMinutes(horario.inicio);
+              const groupEnd = timeToMinutes(horario.fin);
+              
+              // Verificar si hay overlap con el tiempo especificado
+              if (overlap(startTime, endTime, groupStart, groupEnd)) {
+                // Determinar el estado del grupo
+                let status = 'available';
+                if (!group.available) {
+                  status = 'full';
+                } else if (selectedGroups.has(group._idx)) {
+                  status = 'selected';
+                }
+                
+                groups.push({
+                  ...group,
+                  horario: horario,
+                  status: status
+                });
+              }
+            }
+          });
+        });
+      });
+      
+      // Eliminar duplicados y ordenar por materia
+      const uniqueGroups = groups.filter((group, index, self) => 
+        index === self.findIndex(g => g._idx === group._idx)
+      );
+      
+      return uniqueGroups.sort((a, b) => a.materia.localeCompare(b.materia));
+    }
+
+    // Función para crear el tooltip
+    function createTooltip() {
+      if (hoverTooltip) return hoverTooltip;
+      
+      hoverTooltip = document.createElement('div');
+      hoverTooltip.className = 'hover-tooltip';
+      document.body.appendChild(hoverTooltip);
+      return hoverTooltip;
+    }
+
+    // Función para mostrar el tooltip
+    function showTooltip(event, dayIndex, timeSlot) {
+      if (!dataLoaded) return;
+      
+      const tooltip = createTooltip();
+      const timeStart = 7*60 + timeSlot * 30; // 7:00 AM + slot * 30min
+      const timeEnd = timeStart + 30; // 30 minutos de duración por slot
+      
+      const groups = getGroupsForTimeSlot(dayIndex, timeStart, timeEnd);
+      
+      // Formatear tiempo para mostrar
+      const formatTime = (minutes) => {
+        const hours = Math.floor(minutes / 60);
+        const mins = minutes % 60;
+        return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+      };
+      
+      const startTimeStr = formatTime(timeStart);
+      const endTimeStr = formatTime(timeEnd);
+      const dayName = DAY_NAMES[dayIndex];
+      
+      // Construir contenido del tooltip
+      let content = `
+        <h5>Grupos disponibles</h5>
+        <div class="time-info">${dayName}, ${startTimeStr} - ${endTimeStr}</div>
+      `;
+      
+      if (groups.length === 0) {
+        content += '<div class="no-groups">No hay grupos programados en este horario</div>';
+      } else {
+        groups.forEach(group => {
+          const statusClass = group.status;
+          const statusText = group.status === 'full' ? '(Lleno)' : 
+                           group.status === 'selected' ? '(Seleccionado)' : 
+                           '(Disponible)';
+          
+          content += `
+            <div class="group-item ${statusClass}">
+              <div class="group-name">${group.materia} - Grupo ${group.grupo}</div>
+              <div class="group-details">
+                ${group.profesor} • ${group.horario.inicio}-${group.horario.fin} ${statusText}
+              </div>
+            </div>
+          `;
+        });
+      }
+      
+      tooltip.innerHTML = content;
+      
+      // Posicionar tooltip
+      const rect = event.target.getBoundingClientRect();
+      const tooltipRect = tooltip.getBoundingClientRect();
+      
+      let left = event.pageX + 10;
+      let top = event.pageY - 10;
+      
+      // Ajustar si se sale de la pantalla
+      if (left + tooltipRect.width > window.innerWidth) {
+        left = event.pageX - tooltipRect.width - 10;
+      }
+      if (top + tooltipRect.height > window.innerHeight + window.pageYOffset) {
+        top = event.pageY - tooltipRect.height - 10;
+      }
+      
+      tooltip.style.left = left + 'px';
+      tooltip.style.top = top + 'px';
+      tooltip.classList.add('show');
+    }
+
+    // Función para ocultar el tooltip
+    function hideTooltip() {
+      if (hoverTooltip) {
+        hoverTooltip.classList.remove('show');
+      }
+    }
+
     // Utils: map days
     const DAYMAP = {LU:0, MA:1, MI:2, JU:3, VI:4};
     const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
@@ -549,9 +692,61 @@
       const timecol = document.createElement('div'); timecol.style.display='grid'; timecol.style.gridTemplateRows = `repeat(${rows},40px)`;
       for(let r=0;r<rows;r++){ const t = start + r*step; const h = Math.floor(t/60).toString().padStart(2,'0')+':'+(t%60).toString().padStart(2,'0'); const cell = document.createElement('div'); cell.className='timecell'; cell.textContent=h; timecol.appendChild(cell); }
       grid.appendChild(timecol);
-      // day columns
+      
+      // day columns with hover functionality
       for(let d=0;d<5;d++){
-        const col = document.createElement('div'); col.className='daycol'; col.style.display='block'; col.style.minHeight=(rows*40)+'px';
+        const col = document.createElement('div'); 
+        col.className='daycol'; 
+        col.style.display='block'; 
+        col.style.minHeight=(rows*40)+'px';
+        col.dataset.day = d; // Guardar el índice del día
+        
+        // Crear celdas invisibles para cada slot de tiempo para detectar hover
+        for(let r=0;r<rows;r++){
+          const timeSlot = document.createElement('div');
+          timeSlot.style.position = 'absolute';
+          timeSlot.style.top = (r * 40) + 'px';
+          timeSlot.style.left = '0';
+          timeSlot.style.right = '0';
+          timeSlot.style.height = '40px';
+          timeSlot.style.zIndex = '1';
+          timeSlot.dataset.timeSlot = r;
+          timeSlot.dataset.day = d;
+          
+          // Event listeners para hover
+          timeSlot.addEventListener('mouseenter', function(e) {
+            const dayIndex = parseInt(this.dataset.day);
+            const timeSlotIndex = parseInt(this.dataset.timeSlot);
+            showTooltip(e, dayIndex, timeSlotIndex);
+          });
+          
+          timeSlot.addEventListener('mouseleave', function() {
+            hideTooltip();
+          });
+          
+          timeSlot.addEventListener('mousemove', function(e) {
+            // Actualizar posición del tooltip mientras se mueve el mouse
+            if (hoverTooltip && hoverTooltip.classList.contains('show')) {
+              const tooltipRect = hoverTooltip.getBoundingClientRect();
+              let left = e.pageX + 10;
+              let top = e.pageY - 10;
+              
+              // Ajustar si se sale de la pantalla
+              if (left + tooltipRect.width > window.innerWidth) {
+                left = e.pageX - tooltipRect.width - 10;
+              }
+              if (top + tooltipRect.height > window.innerHeight + window.pageYOffset) {
+                top = e.pageY - tooltipRect.height - 10;
+              }
+              
+              hoverTooltip.style.left = left + 'px';
+              hoverTooltip.style.top = top + 'px';
+            }
+          });
+          
+          col.appendChild(timeSlot);
+        }
+        
         grid.appendChild(col);
       }
       cal.appendChild(grid);
@@ -569,6 +764,7 @@
           block.style.top = top + 'px'; block.style.left='6px'; block.style.right='6px'; block.style.width = 'calc(100% - 12px)';
           block.style.height = Math.max(28,height-4)+'px';
           block.style.background = stringToColor(g.materia);
+          block.style.zIndex = '2'; // Asegurar que las clases aparezcan sobre las celdas de hover
           block.textContent = `${g.materia} — ${g.grupo} (${h.inicio}-${h.fin})`;
           col.appendChild(block);
         });
