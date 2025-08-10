@@ -1,6 +1,6 @@
 # Simulador de Inscripción de Horarios
 
-Un simulador web interactivo para planificar y visualizar horarios académicos, diseñado para ayudar a estudiantes y administradores a optimizar la selección de materias evitando conflictos de horarios.
+Un simulador web interactivo y avanzado para planificar y visualizar horarios académicos con funcionalidades inteligentes. Diseñado para ayudar a estudiantes y administradores a optimizar la selección de materias evitando conflictos de horarios, con sistema de reservas, selección manual inteligente y visualización interactiva.
 
 [![Netlify Status](https://api.netlify.com/api/v1/badges/ab552440-a332-4153-8fae-3ccf9c4ad30b/deploy-status)](https://app.netlify.com/projects/simulador-de-horarios/deploys)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
@@ -11,38 +11,53 @@ Un simulador web interactivo para planificar y visualizar horarios académicos, 
 
 ## ¿Qué hace este proyecto?
 
-El Simulador de Inscripción de Horarios es una herramienta que te permite:
+El Simulador de Inscripción de Horarios es una herramienta avanzada que te permite:
 
-- **Cargar datos de materias y horarios** desde un archivo JSON
-- **Seleccionar materias deseadas** y ver todos los grupos disponibles
-- **Generar combinaciones automáticamente** sin conflictos de horario
-- **Visualizar horarios en un calendario semanal** intuitivo
-- **Manejar grupos llenos** con sistema de reservas automáticas
-- **Exportar selecciones** para uso posterior
+- **Cargar datos de materias y horarios** desde un archivo JSON dinámicamente
+- **Seleccionar materias y grupos** con tres modalidades distintas de selección
+- **Generar combinaciones automáticamente** sin conflictos de horario con límites configurables
+- **Visualizar horarios en un calendario semanal interactivo** con hover dinámico
+- **Manejar grupos llenos** con sistema de reservas automáticas inteligente
+- **Selección manual inteligente** con prevención automática de conflictos
+- **Auto-llenado con reservas** para optimizar la selección automáticamente
+- **Exportar selecciones** en formato JSON para uso posterior
+- **Interfaz visual moderna** con tooltips informativos y calendario responsivo
 
 ## Características principales
 
 ### 🎯 Selección inteligente
-- Detecta automáticamente conflictos entre horarios
-- Genera todas las combinaciones posibles sin empalmes
-- Sistema de reservas para manejar grupos llenos
+- **Tres modalidades de selección**: Generación automática, auto-llenado con reservas y selección manual
+- **Detección automática de conflictos** entre horarios en tiempo real
+- **Prevención inteligente de empalmes** durante la selección manual
+- **Sistema de reservas avanzado** para manejar grupos llenos automáticamente
+- **Límites configurables** de combinaciones para optimizar rendimiento
 
-### 📅 Visualización clara
-- Calendario semanal visual (Lunes a Viernes, 7:00-22:00)
-- Códigos de color únicos por materia
-- Información detallada de cada clase
+### 📅 Visualización interactiva
+- **Calendario semanal visual** responsivo (Lunes a Viernes, 7:00-22:00)
+- **Códigos de color únicos** generados automáticamente por materia
+- **Tooltips informativos** con hover que muestran grupos disponibles por horario
+- **Información detallada** de profesores, grupos y disponibilidad en tiempo real
+- **Indicadores visuales** de estado (disponible, lleno, seleccionado)
 
-### ⚡ Funciones avanzadas
-- Selección manual grupo por grupo con prevención de conflictos
-- Auto-llenado inteligente con manejo de reservas
-- Límite configurable de combinaciones para mejor rendimiento
+### ⚡ Funciones avanzadas interactivas
+- **Selección manual inteligente** que deshabilita automáticamente grupos conflictivos en tiempo real
+- **Auto-llenado con reservas** que optimiza la selección evitando conflictos cuando es posible
+- **Sistema inteligente de grupos llenos** con simulación realista de indisponibilidad
+- **Prevención automática de conflictos** durante la selección individual de grupos
+- **Reglas de negocio aplicadas** (un grupo por materia, no grupos llenos, etc.)
+- **Exportación completa en JSON** de configuraciones para reutilización y backup
+- **Carga dinámica asíncrona** de datos desde archivos JSON externos
+- **Interfaz completamente responsive** con diseño moderno, accesible y optimizado
+- **Sistema de tooltips avanzado** con información contextual y posicionamiento inteligente
+- **Algoritmo de backtracking optimizado** para generación eficiente de miles de combinaciones
 
 ## Estructura del proyecto
 
 ```
 horarios/
-├── simulador_de_inscripcion_horarios.html  # Aplicación principal
+├── index.html                              # Aplicación principal interactiva
 ├── horarios.json                           # Datos de materias y horarios
+├── app.png                                 # Captura de pantalla de la aplicación
 └── README.md                              # Este archivo
 ```
 
@@ -92,101 +107,179 @@ El archivo `horarios.json` contiene un array de objetos, donde cada objeto repre
 
 ### 1. Preparación inicial
 1. Asegúrate de tener el archivo `horarios.json` en la misma carpeta que el HTML
-2. Abre `simulador_de_inscripcion_horarios.html` en tu navegador
+2. Abre `index.html` en tu navegador
+3. La aplicación cargará automáticamente los datos y estará lista para usar
 
-### 2. Selección de materias
-- **Marca las materias** que quieras inscribir usando los checkboxes
+### 2. Selección de materias y grupos
+- **Marca las materias** que quieras inscribir usando los checkboxes principales
 - Cada materia muestra cuántos grupos tiene disponibles
-- Puedes marcar grupos como "llenos" para simular indisponibilidad
+- **Marca grupos específicos** usando los checkboxes individuales para selección manual
+- **Marca grupos como "llenos"** para simular indisponibilidad y forzar alternativas
 
-### 3. Métodos de selección
+### 3. Modalidades de selección (¡3 formas diferentes!)
 
-#### Opción A: Generación automática de combinaciones
-1. Haz clic en **"Calcular combinaciones"**
-2. El sistema generará todas las combinaciones posibles sin conflictos
-3. Selecciona una combinación de la lista para visualizarla
+#### Modalidad A: Generación automática de combinaciones
+1. Marca las materias deseadas (sin seleccionar grupos específicos)
+2. Haz clic en **"Calcular combinaciones"**
+3. El sistema generará automáticamente todas las combinaciones posibles sin conflictos
+4. Navega por la lista de combinaciones y selecciona la que prefieras
+5. Visualiza la combinación seleccionada en el calendario interactivo
 
-#### Opción B: Auto-llenado inteligente
-1. Haz clic en **"Auto llenar (con reservas)"**
-2. El sistema seleccionará automáticamente grupos sin conflictos
-3. Si hay conflictos inevitables, agregará grupos como "reservas"
+#### Modalidad B: Auto-llenado inteligente con reservas
+1. Marca las materias deseadas
+2. Haz clic en **"Auto llenar (con reservas)"**
+3. El algoritmo inteligente seleccionará automáticamente los primeros grupos disponibles sin conflictos
+4. Si encuentra conflictos inevitables, agregará grupos adicionales como "reservas"
+5. Ideal para obtener una selección rápida y optimizada
 
-#### Opción C: Selección manual
-1. Marca individualmente los grupos que deseas
-2. El sistema deshabilitará automáticamente grupos conflictivos
-3. Solo puedes seleccionar un grupo por materia
+#### Modalidad C: Selección manual inteligente
+1. **No uses los botones automáticos** - selecciona grupos individualmente
+2. Marca directamente los checkboxes de los grupos específicos que deseas
+3. **El sistema es inteligente**: automáticamente deshabilita grupos conflictivos en tiempo real
+4. Solo puedes seleccionar un grupo por materia (regla automática)
+5. Los grupos marcados como "llenos" no pueden seleccionarse
+6. Perfecto para cuando sabes exactamente qué grupos quieres
 
-### 4. Visualización y exportación
-- El calendario muestra tu selección actual con colores únicos por materia
-- Usa **"Exportar selección (JSON)"** para guardar tu configuración
-- **"Limpiar selección manual"** para empezar de nuevo
+### 4. Visualización interactiva y exploración
+- **Calendario semanal dinámico** con tu selección actual en colores únicos por materia
+- **Hover sobre cualquier horario** para ver tooltips informativos con:
+  - Grupos disponibles en ese momento
+  - Estado de cada grupo (disponible, lleno, seleccionado)
+  - Detalles de profesores y horarios específicos
+- **Indicadores visuales** de estado en tiempo real
 
-## Configuración avanzada
+### 5. Exportación y gestión
+- **"Exportar selección (JSON)"** para guardar tu configuración completa
+- **"Limpiar selección manual"** para resetear toda la selección manual
+- **Toggle de límite de combinaciones** (recomendado: 2000 para mejor rendimiento)
 
-### Límite de combinaciones
-Por defecto, el sistema limita las combinaciones a 2000 para mantener un rendimiento óptimo. Puedes desactivar esta opción si necesitas explorar más posibilidades, aunque esto puede hacer más lenta la aplicación.
+## Configuración avanzada y características técnicas
 
-### Manejo de grupos llenos
+### Límite de combinaciones inteligente
+- **Por defecto**: 2000 combinaciones para rendimiento óptimo
+- **Configurable**: Puedes desactivar el límite para explorar hasta 50,000 combinaciones
+- **Recomendación**: Mantener activado para mejor experiencia de usuario
+- **Algoritmo**: Utiliza backtracking optimizado para generar combinaciones eficientemente
+
+### Sistema avanzado de grupos llenos
 Marca cualquier grupo como "lleno" para:
-- Excluirlo de las combinaciones automáticas
-- Simular escenarios reales de inscripción
-- Probar el sistema de reservas
+- **Excluir automáticamente** de todas las generaciones automáticas
+- **Simular escenarios reales** de inscripción universitaria
+- **Forzar el sistema de reservas** para probar alternativas
+- **Prevenir selección manual** de grupos no disponibles
+- **No afecta otros grupos** - solo el específicamente marcado
+
+### Funcionalidades interactivas del calendario
+- **Hover dinámico**: Muestra información detallada de grupos en tiempo real
+- **Tooltips informativos**: Incluyen estado, profesor y horarios específicos
+- **Colores automáticos**: Generación de colores únicos por materia usando hash
+- **Responsive design**: Adaptable a diferentes tamaños de pantalla
+- **Visualización en tiempo real**: Actualización instantánea con cada selección
 
 ## Casos de uso típicos
 
 ### Para estudiantes:
-- Planificar tu horario del semestre
-- Encontrar la mejor combinación de materias
-- Visualizar tu carga académica semanal
-- Tener alternativas en caso de grupos llenos
+- **Planificación semestral**: Diseña tu horario ideal con múltiples alternativas
+- **Optimización de tiempo**: Encuentra la mejor combinación evitando tiempos muertos
+- **Visualización clara**: Ve tu carga académica semanal de forma intuitiva
+- **Gestión de backup**: Ten alternativas listas en caso de grupos llenos
+- **Selección precisa**: Elige grupos específicos con profesores preferidos
+- **Simulación realista**: Prueba diferentes escenarios antes de la inscripción oficial
 
 ### Para administradores académicos:
-- Analizar conflictos en la programación de horarios
-- Optimizar la distribución de grupos
-- Planificar capacidades y recursos
+- **Análisis de conflictos**: Identifica empalmes en la programación institucional
+- **Optimización de recursos**: Distribuye grupos para maximizar inscripciones
+- **Planificación estratégica**: Evalúa capacidades y demanda por horarios
+- **Simulación institucional**: Modela diferentes escenarios de oferta académica
 
 ## Resolución de problemas
 
 ### "Error al cargar horarios.json"
-- Verifica que el archivo esté en la misma carpeta que el HTML
-- Asegúrate de que el JSON tenga el formato correcto
-- Revisa la consola del navegador para más detalles
+- **Ubicación**: Verifica que el archivo esté en la misma carpeta que `index.html`
+- **Formato**: Asegúrate de que el JSON tenga la estructura correcta
+- **Permisos**: Ejecuta desde un servidor web local si es necesario
+- **Debugging**: Revisa la consola del navegador (F12) para detalles específicos
 
 ### "No hay combinaciones sin empalmes"
-- Reduce el número de materias seleccionadas
-- Marca algunos grupos como llenos para forzar alternativas
-- Verifica que haya grupos disponibles para todas las materias
+- **Reducir materias**: Disminuye el número de materias seleccionadas simultáneamente
+- **Gestión de grupos llenos**: Desmarca algunos grupos marcados como "llenos"
+- **Verificar disponibilidad**: Asegúrate de que haya al menos un grupo disponible por materia
+- **Usar reservas**: Prueba el auto-llenado con reservas para soluciones alternativas
 
-### Rendimiento lento
-- Activa el límite de 2000 combinaciones
-- Reduce el número de materias seleccionadas simultáneamente
-- Considera usar la función de auto-llenado
+### Rendimiento lento o navegador no responde
+- **Límite activado**: Mantén el límite de 2000 combinaciones habilitado
+- **Selección gradual**: Reduce materias y aumenta progresivamente
+- **Usar auto-llenado**: Considera usar la función automática en lugar de generar todas las combinaciones
+- **Navegador actualizado**: Usa versiones recientes de Chrome, Firefox o Safari
 
-## Personalización
+### Problemas de visualización
+- **Zoom del navegador**: Asegúrate de que esté al 100%
+- **Resolución**: Funciona mejor en pantallas de al menos 1024px de ancho
+- **JavaScript habilitado**: Verifica que esté activado en la configuración del navegador
 
-Para adaptar el simulador a tu institución:
+## Personalización y adaptación
 
-1. **Modifica `horarios.json`** con tus datos específicos
-2. **Ajusta los horarios** cambiando las constantes de tiempo en el código (línea 406)
-3. **Personaliza los estilos** editando el CSS en la sección `<style>`
+Para adaptar el simulador a tu institución específica:
+
+### Datos académicos
+1. **Actualiza `horarios.json`** con tus materias, grupos y profesores específicos
+2. **Mantén la estructura JSON** definida para compatibilidad completa
+3. **Incluye todos los horarios** de cada grupo para detección correcta de conflictos
+
+### Configuración de horarios
+- **Rango de horas**: Modifica las constantes de tiempo en el código (líneas 667-668)
+  - Por defecto: 7:00 AM a 10:00 PM
+  - Intervalos: 30 minutos por slot
+- **Días de la semana**: Actualmente soporta Lunes a Viernes (LU-VI)
+
+### Personalización visual
+- **Colores**: El sistema genera automáticamente colores únicos por materia
+- **Estilos**: Personaliza el CSS en la sección `<style>` del archivo `index.html`
+- **Responsive**: El diseño se adapta automáticamente a diferentes pantallas
+- **Tema**: Fácil modificación de variables CSS para cambiar la apariencia completa
 
 ## Tecnologías utilizadas
 
-- **HTML5** para la estructura
-- **CSS3** para el diseño responsive
-- **JavaScript vanilla** para toda la lógica
-- **JSON** para el almacenamiento de datos
+### Core Technologies
+- **HTML5** para la estructura semántica y moderna
+- **CSS3** con Flexbox y Grid para diseño responsive avanzado
+- **JavaScript ES6+** vanilla para toda la lógica, sin dependencias externas
+- **JSON** para almacenamiento y estructura de datos
 
-## Contribuciones
+### Características técnicas avanzadas
+- **Algoritmos de backtracking** para generación eficiente de combinaciones
+- **Detección de conflictos en tiempo real** con análisis de overlapping
+- **Sistema de eventos dinámicos** para interactividad responsive
+- **Hover tooltips** con posicionamiento inteligente
+- **Hash-based color generation** para colores únicos automáticos
+- **Responsive design** con media queries y layout adaptativo
 
-Este proyecto está diseñado para ser fácilmente extensible. Algunas ideas para mejoras:
+### Arquitectura del proyecto
+- **Single-page application** completamente funcional
+- **Separación de concerns** entre lógica, presentación y datos
+- **Event-driven programming** para máxima interactividad
+- **Performance optimizado** con límites configurables y rendering eficiente
 
-- Soporte para horarios de fin de semana
-- Integración con bases de datos
-- Exportación a diferentes formatos (PDF, Excel)
-- Sistema de notificaciones para cambios de horario
-- Modo oscuro
+## Contribuciones y mejoras futuras
+
+Este proyecto está diseñado para ser fácilmente extensible. Ideas implementables:
+
+### Funcionalidades próximas
+- **Soporte para horarios de fin de semana** (sábados/domingos)
+- **Integración con APIs** y bases de datos institucionales
+- **Exportación multi-formato** (PDF, Excel, iCal)
+- **Sistema de notificaciones** para cambios de horario en tiempo real
+- **Modo oscuro** con toggle automático
+
+### Mejoras técnicas
+- **Progressive Web App (PWA)** para uso offline
+- **Drag & drop** para reordenamiento visual
+- **Filtros avanzados** por profesor, horario, modalidad
+- **Comparador de horarios** lado a lado
+- **Historial de selecciones** con sistema de guardado local
 
 ---
 
-*Desarrollado para facilitar la planificación académica y optimizar la experiencia de inscripción de horarios.*
+**Desarrollado por Kristoffer Van ([@im-krizox](https://github.com/im-krizox))**
+
+*Proyecto diseñado para facilitar la planificación académica y optimizar la experiencia de inscripción de horarios universitarios. Open source bajo licencia MIT.*
