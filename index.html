@@ -173,7 +173,7 @@
       const groupIdx = parseInt(checkbox.dataset.gi);
       const materia = checkbox.dataset.materia;
       
-      // Check if this group is marked as full
+      // REGLA: No se puede seleccionar un grupo marcado como "Lleno"
       const fullCheckbox = document.querySelector(`.isFull[data-gi="${groupIdx}"]`);
       if(fullCheckbox && fullCheckbox.checked){
         checkbox.checked = false;
@@ -185,10 +185,10 @@
         // Add to selected groups
         selectedGroups.add(groupIdx);
         
-        // Disable other groups from same materia
+        // REGLA: Deshabilitar otros grupos de la misma materia
         disableGroupsFromSameMateria(materia, groupIdx);
         
-        // Disable conflicting groups from other materias
+        // REGLA: Deshabilitar grupos que tengan al menos un día y horario en común
         disableConflictingGroups(groupIdx);
         
         // Update calendar with currently selected groups
@@ -225,14 +225,16 @@
       });
     }
 
-    // Disable groups that conflict with the selected group
+    // Disable groups that conflict with the selected group (same day and overlapping time)
     function disableConflictingGroups(selectedGroupIdx){
       const selectedGroup = materias[selectedGroupIdx];
       
-      // Check all other groups for conflicts
+      // Check all other groups for conflicts (day and time overlap)
       Object.values(byMateria).forEach(grupos => {
         grupos.forEach(g => {
+          // Skip if it's the same group or already selected
           if(g._idx !== selectedGroupIdx && !selectedGroups.has(g._idx)){
+            // Check if groups have conflicting schedules (same day + overlapping time)
             if(groupsConflict(selectedGroup, g)){
               const checkbox = document.querySelector(`.selectGroup[data-gi="${g._idx}"]`);
               if(checkbox){
@@ -293,15 +295,20 @@
       const group = materias[groupIdx];
       
       if(checkbox.checked){
-        // Group is now full - disable its own selection and conflicting groups
+        // REGLA: Grupo marcado como "Lleno" no puede seleccionarse
         disableGroupSelection(groupIdx);
-        disableConflictingGroupsForFull(groupIdx);
         
-        // If this group was selected, unselect it
+        // Si este grupo estaba seleccionado, deseleccionarlo automáticamente
         const selectCheckbox = document.querySelector(`.selectGroup[data-gi="${groupIdx}"]`);
         if(selectCheckbox && selectCheckbox.checked){
           selectCheckbox.checked = false;
           selectedGroups.delete(groupIdx);
+          
+          // Recalcular conflictos después de deseleccionar
+          enableAllGroups();
+          recalculateConflicts();
+          recalculateFullGroupConflicts();
+          
           updateCalendarWithSelectedGroups();
         }
       } else {
@@ -313,37 +320,15 @@
       }
     }
 
-    // Disable groups that conflict with a group marked as full
-    function disableConflictingGroupsForFull(fullGroupIdx){
-      const fullGroup = materias[fullGroupIdx];
-      
-      // Check all other groups for conflicts
-      Object.values(byMateria).forEach(grupos => {
-        grupos.forEach(g => {
-          if(g._idx !== fullGroupIdx && !selectedGroups.has(g._idx)){
-            if(groupsConflict(fullGroup, g)){
-              const checkbox = document.querySelector(`.selectGroup[data-gi="${g._idx}"]`);
-              if(checkbox){
-                checkbox.disabled = true;
-                checkbox.parentElement.style.opacity = '0.5';
-                // Add disabled class to the grupo container
-                const grupoContainer = checkbox.closest('.grupo');
-                if(grupoContainer){
-                  grupoContainer.classList.add('disabled');
-                }
-              }
-            }
-          }
-        });
-      });
-    }
+    // Esta función ya no es necesaria - eliminada para corregir el problema
+    // de que los grupos llenos deshabilitaban otros grupos con horarios similares
 
     // Recalculate conflicts for all groups marked as full
     function recalculateFullGroupConflicts(){
       document.querySelectorAll('.isFull:checked').forEach(checkbox => {
         const groupIdx = parseInt(checkbox.dataset.gi);
         disableGroupSelection(groupIdx); // Disable the full group itself
-        disableConflictingGroupsForFull(groupIdx);
+        // Ya no deshabilitamos grupos conflictivos - solo el grupo específico marcado como lleno
       });
     }
 
@@ -545,12 +530,20 @@
       }
     }
 
-    // Utils: map days
+    // Utils: map days and time functions
     const DAYMAP = {LU:0, MA:1, MI:2, JU:3, VI:4};
     const DAY_NAMES = ['Lunes','Martes','Miércoles','Jueves','Viernes'];
 
     function timeToMinutes(t){ const [hh,mm]=t.split(':').map(Number); return hh*60+mm; }
     function overlap(aStart,aEnd,bStart,bEnd){ return Math.max(aStart,bStart) < Math.min(aEnd,bEnd); }
+
+    // ========== REGLAS DE NEGOCIO PARA SELECCIÓN DE GRUPOS ==========
+    // 1. Si un grupo está seleccionado, se deshabilitan automáticamente:
+    //    - Todos los otros grupos de la misma materia
+    //    - Todos los grupos que tengan al menos un día y horario en común (conflicto)
+    // 2. Si un grupo está marcado como "Lleno":
+    //    - Ese grupo no puede seleccionarse hasta desmarcar la casilla
+    //    - NO afecta la disponibilidad de otros grupos
 
     // Allow selecting multiple materias; el JSON provee cada fila como un grupo distinto del mismo nombre de materia.
 
@@ -809,9 +802,20 @@
       if(reserves.length>0) alert('Se agregaron '+reserves.length+' como reservas (pueden empalmar). Revisa el calendario y ajusta manualmente.');
     });
 
+    // Check if two groups have conflicting schedules (same day + overlapping time)
     function groupsConflict(a,b){
-      for(const h1 of a.horarios) for(const h2 of b.horarios) if(DAYMAP[h1.dia]===DAYMAP[h2.dia] && overlap(timeToMinutes(h1.inicio),timeToMinutes(h1.fin),timeToMinutes(h2.inicio),timeToMinutes(h2.fin))) return true;
-      return false;
+      // Compare each schedule from group A with each schedule from group B
+      for(const h1 of a.horarios) {
+        for(const h2 of b.horarios) {
+          // Check if they are on the same day and times overlap
+          if(DAYMAP[h1.dia] === DAYMAP[h2.dia] && 
+             overlap(timeToMinutes(h1.inicio), timeToMinutes(h1.fin), 
+                    timeToMinutes(h2.inicio), timeToMinutes(h2.fin))) {
+            return true; // Conflict found
+          }
+        }
+      }
+      return false; // No conflicts
     }
 
     // export selection
