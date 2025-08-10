@@ -10,7 +10,7 @@
     header{background:linear-gradient(90deg,var(--blue),#3aa0ff);color:#fff;padding:14px 18px}
     .wrap{display:flex;gap:12px;padding:12px}
     .panel{background:var(--card);border-radius:8px;padding:12px;box-shadow:0 1px 4px rgba(0,0,0,.08)}
-    .left-column{width:360px;max-height:76vh;overflow:auto;display:flex;flex-direction:column}
+    .left-column{width:360px;max-height:100vh;overflow:auto;display:flex;flex-direction:column}
     .main{flex:1}
     h2{margin:6px 0 12px}
     .materia{border:1px solid #e6e9ee;padding:8px;border-radius:6px;margin-bottom:8px}
@@ -109,7 +109,7 @@
           row.className='grupo';
           row.innerHTML = `
             <label style='display:flex;align-items:center;gap:6px;margin-right:10px'>
-              <input type='checkbox' class='selectGroup' data-gi='${g._idx}' data-materia='${name}'> Seleccionar
+              <input type='checkbox' class='selectGroup' data-gi='${g._idx}' data-materia='${name}'>
             </label>
             <div style='flex:1'>Grupo ${g.grupo} — <span class='small'>${g.profesor}</span></div>
             <label style='display:flex;align-items:center;gap:6px'>
@@ -124,12 +124,20 @@
       
       // Add event listeners for group selection
       setupGroupSelectionListeners();
+      setupFullStatusListeners();
     }
 
     // Setup event listeners for individual group selection
     function setupGroupSelectionListeners(){
       document.querySelectorAll('.selectGroup').forEach(checkbox => {
         checkbox.addEventListener('change', handleGroupSelection);
+      });
+    }
+
+    // Setup event listeners for "full" status checkboxes
+    function setupFullStatusListeners(){
+      document.querySelectorAll('.isFull').forEach(checkbox => {
+        checkbox.addEventListener('change', handleFullStatusChange);
       });
     }
 
@@ -215,6 +223,52 @@
       });
     }
 
+    // Handle "full" status change
+    function handleFullStatusChange(event){
+      const checkbox = event.target;
+      const groupIdx = parseInt(checkbox.dataset.gi);
+      const group = materias[groupIdx];
+      
+      if(checkbox.checked){
+        // Group is now full - disable conflicting groups
+        disableConflictingGroupsForFull(groupIdx);
+      } else {
+        // Group is no longer full - re-enable all groups and recalculate
+        enableAllGroups();
+        recalculateConflicts();
+        // Re-apply full status for other groups marked as full
+        recalculateFullGroupConflicts();
+      }
+    }
+
+    // Disable groups that conflict with a group marked as full
+    function disableConflictingGroupsForFull(fullGroupIdx){
+      const fullGroup = materias[fullGroupIdx];
+      
+      // Check all other groups for conflicts
+      Object.values(byMateria).forEach(grupos => {
+        grupos.forEach(g => {
+          if(g._idx !== fullGroupIdx && !selectedGroups.has(g._idx)){
+            if(groupsConflict(fullGroup, g)){
+              const checkbox = document.querySelector(`.selectGroup[data-gi="${g._idx}"]`);
+              if(checkbox){
+                checkbox.disabled = true;
+                checkbox.parentElement.style.opacity = '0.5';
+              }
+            }
+          }
+        });
+      });
+    }
+
+    // Recalculate conflicts for all groups marked as full
+    function recalculateFullGroupConflicts(){
+      document.querySelectorAll('.isFull:checked').forEach(checkbox => {
+        const groupIdx = parseInt(checkbox.dataset.gi);
+        disableConflictingGroupsForFull(groupIdx);
+      });
+    }
+
     // Update calendar to show currently selected groups
     function updateCalendarWithSelectedGroups(){
       const selectedGroupObjects = Array.from(selectedGroups).map(idx => materias[idx]);
@@ -264,6 +318,9 @@
         dataLoaded = true;
         document.getElementById('computeBtn').disabled = false;
         document.getElementById('autoBtn').disabled = false;
+        
+        // Mostrar el calendario con guías desde el inicio
+        drawCalendar([]);
       }catch(err){
         console.error(err);
         alert('Error al cargar horarios.json. Asegúrate de que el archivo exista junto a este HTML.');
@@ -421,7 +478,7 @@
       cal.appendChild(grid);
 
       // place classes
-      if(!combo) return;
+      if(!combo || combo.length === 0) return;
       combo.forEach((g,gi)=>{
         g.horarios.forEach(h=>{
           const day = DAYMAP[h.dia]; if(day===undefined) return;
@@ -495,6 +552,11 @@
 
     // initial small render
     document.getElementById('comboCount').textContent='0';
+    
+    // Mostrar el calendario inicial vacío una vez que el DOM esté listo
+    if(document.readyState !== 'loading') {
+      drawCalendar([]);
+    }
 
   </script>
 </body>
