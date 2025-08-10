@@ -29,8 +29,11 @@
     label.switch{display:inline-flex;align-items:center;gap:8px}
     .grupo{border-radius:4px;padding:6px;margin:4px 0;transition:background-color 0.2s}
     .grupo:hover{background-color:#f8f9fa}
+    .grupo.disabled{background-color:#e9ecef !important;border:1px solid #dee2e6}
+    .grupo.disabled:hover{background-color:#e9ecef !important}
     .selectGroup{accent-color:var(--blue)}
     .grupo label{cursor:pointer}
+    .grupo.disabled label{cursor:not-allowed;color:#6c757d}
     .controls{display:flex;gap:8px;flex-wrap:wrap}
     h3{margin:6px 0 12px;font-size:16px}
     h4{margin:12px 0 8px;font-size:14px;color:#555}
@@ -125,6 +128,9 @@
       // Add event listeners for group selection
       setupGroupSelectionListeners();
       setupFullStatusListeners();
+      
+      // Apply initial full group status
+      applyInitialFullGroupStatus();
     }
 
     // Setup event listeners for individual group selection
@@ -141,11 +147,24 @@
       });
     }
 
+    // Apply initial full group status on page load
+    function applyInitialFullGroupStatus(){
+      recalculateFullGroupConflicts();
+    }
+
     // Handle individual group selection
     function handleGroupSelection(event){
       const checkbox = event.target;
       const groupIdx = parseInt(checkbox.dataset.gi);
       const materia = checkbox.dataset.materia;
+      
+      // Check if this group is marked as full
+      const fullCheckbox = document.querySelector(`.isFull[data-gi="${groupIdx}"]`);
+      if(fullCheckbox && fullCheckbox.checked){
+        checkbox.checked = false;
+        alert('No puedes seleccionar un grupo marcado como lleno.');
+        return;
+      }
       
       if(checkbox.checked){
         // Add to selected groups
@@ -181,6 +200,11 @@
           if(checkbox){
             checkbox.disabled = true;
             checkbox.parentElement.style.opacity = '0.5';
+            // Add disabled class to the grupo container
+            const grupoContainer = checkbox.closest('.grupo');
+            if(grupoContainer){
+              grupoContainer.classList.add('disabled');
+            }
           }
         }
       });
@@ -199,6 +223,11 @@
               if(checkbox){
                 checkbox.disabled = true;
                 checkbox.parentElement.style.opacity = '0.5';
+                // Add disabled class to the grupo container
+                const grupoContainer = checkbox.closest('.grupo');
+                if(grupoContainer){
+                  grupoContainer.classList.add('disabled');
+                }
               }
             }
           }
@@ -211,7 +240,26 @@
       document.querySelectorAll('.selectGroup').forEach(checkbox => {
         checkbox.disabled = false;
         checkbox.parentElement.style.opacity = '1';
+        // Remove disabled class from the grupo container
+        const grupoContainer = checkbox.closest('.grupo');
+        if(grupoContainer){
+          grupoContainer.classList.remove('disabled');
+        }
       });
+    }
+
+    // Disable selection for a specific group
+    function disableGroupSelection(groupIdx){
+      const checkbox = document.querySelector(`.selectGroup[data-gi="${groupIdx}"]`);
+      if(checkbox){
+        checkbox.disabled = true;
+        checkbox.parentElement.style.opacity = '0.5';
+        // Add disabled class to the grupo container
+        const grupoContainer = checkbox.closest('.grupo');
+        if(grupoContainer){
+          grupoContainer.classList.add('disabled');
+        }
+      }
     }
 
     // Recalculate conflicts for currently selected groups
@@ -230,8 +278,17 @@
       const group = materias[groupIdx];
       
       if(checkbox.checked){
-        // Group is now full - disable conflicting groups
+        // Group is now full - disable its own selection and conflicting groups
+        disableGroupSelection(groupIdx);
         disableConflictingGroupsForFull(groupIdx);
+        
+        // If this group was selected, unselect it
+        const selectCheckbox = document.querySelector(`.selectGroup[data-gi="${groupIdx}"]`);
+        if(selectCheckbox && selectCheckbox.checked){
+          selectCheckbox.checked = false;
+          selectedGroups.delete(groupIdx);
+          updateCalendarWithSelectedGroups();
+        }
       } else {
         // Group is no longer full - re-enable all groups and recalculate
         enableAllGroups();
@@ -254,6 +311,11 @@
               if(checkbox){
                 checkbox.disabled = true;
                 checkbox.parentElement.style.opacity = '0.5';
+                // Add disabled class to the grupo container
+                const grupoContainer = checkbox.closest('.grupo');
+                if(grupoContainer){
+                  grupoContainer.classList.add('disabled');
+                }
               }
             }
           }
@@ -265,6 +327,7 @@
     function recalculateFullGroupConflicts(){
       document.querySelectorAll('.isFull:checked').forEach(checkbox => {
         const groupIdx = parseInt(checkbox.dataset.gi);
+        disableGroupSelection(groupIdx); // Disable the full group itself
         disableConflictingGroupsForFull(groupIdx);
       });
     }
@@ -291,6 +354,8 @@
         checkbox.checked = false;
       });
       enableAllGroups();
+      // Re-apply full group status after enabling all
+      recalculateFullGroupConflicts();
       document.getElementById('selectedCombo').textContent = '-';
       currentCombo = null;
       drawCalendar([]);
