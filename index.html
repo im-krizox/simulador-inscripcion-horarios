@@ -18,8 +18,10 @@
     .btn{background:var(--blue);color:#fff;padding:8px 10px;border-radius:6px;border:0;cursor:pointer}
     .small{font-size:13px;color:#666}
     .controls{display:flex;gap:8px;margin-bottom:12px}
-    #calendar{width:100%;height:640px;border-radius:6px;overflow:auto}
-    .grid{display:grid;grid-template-columns:60px repeat(5,1fr);border-top:1px solid #e6e9ee}
+    #calendar{width:100%;height:640px;border-radius:6px;overflow:auto;position:relative}
+    .calendar-header{display:grid;grid-template-columns:60px repeat(5,1fr);border-top:1px solid #e6e9ee;border-bottom:1px solid #e6e9ee;position:sticky;top:0;z-index:10;background:white}
+    .header-cell{padding:6px;font-weight:bold;background:#f8f9fa;border-right:1px solid #e6e9ee;text-align:center}
+    .grid{display:grid;grid-template-columns:60px repeat(5,1fr)}
     .timecell{border-right:1px solid #e6e9ee;padding:6px;font-size:12px;background:#fafbfd}
     .daycol{min-height:40px;border-right:1px solid #e6e9ee;position:relative}
     .slot{position:absolute;border-radius:6px;padding:6px;font-size:12px;color:#fff}
@@ -527,6 +529,20 @@
     function drawCalendar(combo){
       const start = 7*60, end = 22*60; const step = 30; const rows = (end-start)/step;
       const cal = document.getElementById('calendar'); cal.innerHTML='';
+      
+      // Create sticky header
+      const header = document.createElement('div'); header.className='calendar-header';
+      // Empty cell for time column
+      const emptyHeaderCell = document.createElement('div'); emptyHeaderCell.className='header-cell'; emptyHeaderCell.textContent='Hora';
+      header.appendChild(emptyHeaderCell);
+      // Day headers
+      for(let d=0;d<5;d++){
+        const dayHeader = document.createElement('div'); dayHeader.className='header-cell'; dayHeader.textContent = DAY_NAMES[d];
+        header.appendChild(dayHeader);
+      }
+      cal.appendChild(header);
+      
+      // Create main grid
       const grid = document.createElement('div'); grid.className='grid';
       // time col
       const timecol = document.createElement('div'); timecol.style.display='grid'; timecol.style.gridTemplateRows = `repeat(${rows},40px)`;
@@ -535,9 +551,6 @@
       // day columns
       for(let d=0;d<5;d++){
         const col = document.createElement('div'); col.className='daycol'; col.style.display='block'; col.style.minHeight=(rows*40)+'px';
-        // label
-        const label = document.createElement('div'); label.style.padding='6px'; label.style.borderBottom='1px solid #eee'; label.textContent = DAY_NAMES[d]; col.appendChild(label);
-        // append empty background slots
         grid.appendChild(col);
       }
       cal.appendChild(grid);
@@ -552,7 +565,7 @@
           const top = ((s - start) / (end - start)) * (rows*40) ;
           const height = ((e - s) / (end - start)) * (rows*40);
           const block = document.createElement('div'); block.className='slot';
-          block.style.top = (top+28) + 'px'; block.style.left='6px'; block.style.right='6px'; block.style.width = 'calc(100% - 12px)';
+          block.style.top = top + 'px'; block.style.left='6px'; block.style.right='6px'; block.style.width = 'calc(100% - 12px)';
           block.style.height = Math.max(28,height-4)+'px';
           block.style.background = stringToColor(g.materia);
           block.textContent = `${g.materia} — ${g.grupo} (${h.inicio}-${h.fin})`;
