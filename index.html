@@ -787,7 +787,7 @@
           const top = ((s - start) / (end - start)) * (rows*40) ;
           const height = ((e - s) / (end - start)) * (rows*40);
           const block = document.createElement('div'); block.className='slot';
-          block.style.top = top + 'px'; block.style.left='6px'; block.style.right='6px'; block.style.width = 'calc(100% - 12px)';
+          block.style.top = top + 'px'; block.style.left='0px'; block.style.right='6px'; block.style.width = 'calc(100% - 10px)';
           block.style.height = Math.max(28,height-4)+'px';
           block.style.background = stringToColor(g.materia);
           block.style.zIndex = '2'; // Asegurar que las clases aparezcan sobre las celdas de hover
