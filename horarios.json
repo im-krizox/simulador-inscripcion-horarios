@@ -87,7 +87,7 @@
             { "dia": "MA", "inicio": "11:00", "fin": "13:00" },
             { "dia": "JU", "inicio": "11:00", "fin": "13:00" }
         ],
-        "profesor": "Profesor no asignado"
+        "profesor": "Quiroz Almaraz Sergio"
     },
     {
         "materia": "Temas selectos de computacion 1",
@@ -114,7 +114,7 @@
             { "dia": "MA", "inicio": "18:00", "fin": "20:00" },
             { "dia": "JU", "inicio": "18:00", "fin": "20:00" }
         ],
-        "profesor": "Profesor no asignado"
+        "profesor": "Carrillo Ramirez Teresa"
     },
     {
         "materia": "Sistemas inteligentes",
