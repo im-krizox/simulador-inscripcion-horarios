@@ -2,7 +2,7 @@
 
 Un simulador web interactivo y avanzado para planificar y visualizar horarios académicos con funcionalidades inteligentes. Diseñado para ayudar a estudiantes y administradores a optimizar la selección de materias evitando conflictos de horarios, con sistema de reservas, selección manual inteligente y visualización interactiva.
 
-[![Netlify Status](https://api.netlify.com/api/v1/badges/ab552440-a332-4153-8fae-3ccf9c4ad30b/deploy-status)](https://app.netlify.com/projects/simulador-de-horarios/deploys)
+[![Deployed on Vercel](https://img.shields.io/badge/Deployed%20on-Vercel-black?style=flat&logo=vercel&logoColor=white)](https://simulador-inscripcion-horarios.krisv.dev/)
 ![HTML5](https://img.shields.io/badge/HTML5-E34F26?style=flat&logo=html5&logoColor=white)
 ![CSS3](https://img.shields.io/badge/CSS3-1572B6?style=flat&logo=css3&logoColor=white)
 ![JavaScript](https://img.shields.io/badge/JavaScript-F7DF1E?style=flat&logo=javascript&logoColor=black)
