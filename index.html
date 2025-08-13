@@ -44,9 +44,10 @@
     .hover-tooltip h5{margin:0 0 8px;font-size:14px;color:#333;font-weight:600}
     .hover-tooltip .time-info{color:#666;margin-bottom:8px;font-size:12px}
     .hover-tooltip .group-item{padding:6px 8px;margin:4px 0;background:#f8f9fa;border-radius:4px;border-left:4px solid #ddd}
-    .hover-tooltip .group-item.available{border-left-color:#28a745}
-    .hover-tooltip .group-item.full{border-left-color:#dc3545;opacity:0.7}
+    .hover-tooltip .group-item.available{border-left-color:#28a745;border:2px solid #28a745}
+    .hover-tooltip .group-item.full{border-left-color:#dc3545;border:2px solid #dc3545;opacity:0.7}
     .hover-tooltip .group-item.selected{border-left-color:var(--blue);background:#e3f2fd}
+    .hover-tooltip .group-item.same-materia{border-left-color:#ffc107;border:2px solid #ffc107;background:#f8f9fa}
     .hover-tooltip .group-name{font-weight:500;color:#333}
     .hover-tooltip .group-details{color:#666;font-size:11px;margin-top:2px}
     .hover-tooltip .no-groups{color:#999;font-style:italic;text-align:center;padding:8px}
@@ -452,10 +453,27 @@
               if (overlap(startTime, endTime, groupStart, groupEnd)) {
                 // Determinar el estado del grupo
                 let status = 'available';
-                if (!group.available) {
+                
+                // Verificar si el grupo está marcado como lleno
+                const fullCheckbox = document.querySelector(`.isFull[data-gi="${group._idx}"]`);
+                const isMarkedFull = fullCheckbox && fullCheckbox.checked;
+                
+                if (isMarkedFull) {
                   status = 'full';
                 } else if (selectedGroups.has(group._idx)) {
                   status = 'selected';
+                } else {
+                  // Verificar si ya hay un grupo seleccionado de la misma materia
+                  const hasSelectedFromSameMateria = Array.from(selectedGroups).some(selectedIdx => {
+                    const selectedGroup = materias[selectedIdx];
+                    return selectedGroup.materia === group.materia && selectedIdx !== group._idx;
+                  });
+                  
+                  if (hasSelectedFromSameMateria) {
+                    status = 'same-materia';
+                  } else {
+                    status = 'available';
+                  }
                 }
                 
                 groups.push({
@@ -521,6 +539,7 @@
           const statusClass = group.status;
           const statusText = group.status === 'full' ? '(Lleno)' : 
                            group.status === 'selected' ? '(Seleccionado)' : 
+                           group.status === 'same-materia' ? '(Misma materia ya seleccionada)' :
                            '(Disponible)';
           
           content += `
