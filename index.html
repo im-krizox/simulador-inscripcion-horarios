@@ -185,6 +185,12 @@
         // Add to selected groups
         selectedGroups.add(groupIdx);
         
+        // NUEVA REGLA: Auto-seleccionar la materia cuando se selecciona un grupo
+        const materiaCheckbox = document.querySelector(`.want[data-name="${materia}"]`);
+        if(materiaCheckbox){
+          materiaCheckbox.checked = true;
+        }
+        
         // REGLA: Deshabilitar otros grupos de la misma materia
         disableGroupsFromSameMateria(materia, groupIdx);
         
@@ -196,6 +202,17 @@
       } else {
         // Remove from selected groups
         selectedGroups.delete(groupIdx);
+        
+        // NUEVA REGLA: Si no quedan grupos seleccionados de esta materia, deseleccionar la materia
+        const hasOtherSelectedGroups = Array.from(selectedGroups).some(idx => {
+          return materias[idx].materia === materia;
+        });
+        if(!hasOtherSelectedGroups){
+          const materiaCheckbox = document.querySelector(`.want[data-name="${materia}"]`);
+          if(materiaCheckbox){
+            materiaCheckbox.checked = false;
+          }
+        }
         
         // Re-enable all groups and recalculate conflicts
         enableAllGroups();
@@ -304,6 +321,18 @@
           selectCheckbox.checked = false;
           selectedGroups.delete(groupIdx);
           
+          // NUEVA REGLA: Si no quedan grupos seleccionados de esta materia, deseleccionar la materia
+          const materia = materias[groupIdx].materia;
+          const hasOtherSelectedGroups = Array.from(selectedGroups).some(idx => {
+            return materias[idx].materia === materia;
+          });
+          if(!hasOtherSelectedGroups){
+            const materiaCheckbox = document.querySelector(`.want[data-name="${materia}"]`);
+            if(materiaCheckbox){
+              materiaCheckbox.checked = false;
+            }
+          }
+          
           // Recalcular conflictos después de deseleccionar
           enableAllGroups();
           recalculateConflicts();
@@ -351,6 +380,10 @@
     function clearIndividualSelections(){
       selectedGroups.clear();
       document.querySelectorAll('.selectGroup').forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      // NUEVA REGLA: También deseleccionar todas las materias
+      document.querySelectorAll('.want').forEach(checkbox => {
         checkbox.checked = false;
       });
       enableAllGroups();
